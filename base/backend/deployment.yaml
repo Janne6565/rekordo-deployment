@@ -98,6 +98,29 @@ spec:
                   name: music-collector-mail-secret
                   key: MC_MAIL_API_KEY
                   optional: true
+            # Cloudflare Turnstile, in front of sign-up, sign-in and the two endpoints that
+            # send mail to an address the caller typed. One widget covers both environments,
+            # so both overlays seal the same pair -- the widget's domain list is what keeps
+            # a staging token from being solved anywhere unexpected, and the backend's
+            # hostname check is what refuses one that was.
+            #
+            # Optional, and both halves must arrive together: with neither set the check is
+            # simply off and the app starts, which is what keeps prod running until the
+            # secret lands. With exactly one set the app refuses to start, on purpose --
+            # half-configured would either serve a widget whose tokens cannot be verified or
+            # demand tokens no client was told to produce.
+            - name: MC_TURNSTILE_SITE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: music-collector-turnstile-secret
+                  key: MC_TURNSTILE_SITE_KEY
+                  optional: true
+            - name: MC_TURNSTILE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: music-collector-turnstile-secret
+                  key: MC_TURNSTILE_SECRET_KEY
+                  optional: true
             # Apple needs four values, not two: it issues no static client secret, so
             # AppleClientSecret signs a short-lived ES256 JWT per request from the .p8 key
             # (MC_OAUTH_APPLE_KEY), keyed by MC_OAUTH_APPLE_KEY_ID, issued by the team and
