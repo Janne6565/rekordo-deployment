@@ -7,3 +7,4 @@ resources:
   - music-collector-oauth-secret.yaml
   - music-collector-mail-secret.yaml
   - music-collector-discogs-secret.yaml
+  - music-collector-turnstile-secret.yaml

@@ -20,6 +20,10 @@ configMapGenerator:
   - MC_ENVIRONMENT=staging
   - OTEL_RESOURCE_ATTRIBUTES=deployment.environment=staging
   - MC_PUBLIC_URL=https://rekordo-staging.jannekeipert.de
+  # Staging refuses outright from the start. No shipped phone build is signed into it, so
+  # there is nothing to wait for -- and it is the only place the action and hostname
+  # checks can be exercised against real keys before prod comes to rely on them.
+  - MC_TURNSTILE_ENFORCE=true
   name: music-collector-backend-config
 
   # The deployment references the config map by its plain name.
