@@ -13,6 +13,11 @@ resources:
   # The app's own origin. OAuth redirect URIs are built from it and must match what
   # the provider has registered, and password-reset links point at it — the
   # application.yml default is localhost, which would silently break both.
+  # Deliberately observing, not refusing. Every phone build at v1.23.0 or earlier predates
+  # the widget and sends no token; enforcing before those are gone would lock their owners
+  # out of their own accounts. The widget is drawn and its tokens are verified and logged
+  # meanwhile. Flip to true once `Turnstile would have refused ...: no token` has died away
+  # in the backend log and the new app build has rolled out.
 configMapGenerator:
 - behavior: merge
   literals:
@@ -21,11 +26,6 @@ configMapGenerator:
   - OTEL_RESOURCE_ATTRIBUTES=deployment.environment=prod
   - MC_PUBLIC_URL=https://rekordo.jannekeipert.de
   - MC_PUSH_ENABLED=true
-  # Deliberately observing, not refusing. Every phone build at v1.23.0 or earlier predates
-  # the widget and sends no token; enforcing before those are gone would lock their owners
-  # out of their own accounts. The widget is drawn and its tokens are verified and logged
-  # meanwhile. Flip to true once `Turnstile would have refused ...: no token` has died away
-  # in the backend log and the new app build has rolled out.
   - MC_TURNSTILE_ENFORCE=false
   name: music-collector-backend-config
 
@@ -37,4 +37,4 @@ images:
 - name: ghcr.io/janne6565/rekordo-backend
   newTag: 0.27.0
 - name: ghcr.io/janne6565/rekordo-frontend
-  newTag: 0.28.6
+  newTag: 0.29.0
