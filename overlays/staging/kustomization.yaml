@@ -13,6 +13,9 @@ resources:
   # The app's own origin. OAuth redirect URIs are built from it and must match what
   # the provider has registered, and password-reset links point at it — the
   # application.yml default is localhost, which would silently break both.
+  # Staging refuses outright from the start. No shipped phone build is signed into it, so
+  # there is nothing to wait for -- and it is the only place the action and hostname
+  # checks can be exercised against real keys before prod comes to rely on them.
 configMapGenerator:
 - behavior: merge
   literals:
@@ -20,9 +23,6 @@ configMapGenerator:
   - MC_ENVIRONMENT=staging
   - OTEL_RESOURCE_ATTRIBUTES=deployment.environment=staging
   - MC_PUBLIC_URL=https://rekordo-staging.jannekeipert.de
-  # Staging refuses outright from the start. No shipped phone build is signed into it, so
-  # there is nothing to wait for -- and it is the only place the action and hostname
-  # checks can be exercised against real keys before prod comes to rely on them.
   - MC_TURNSTILE_ENFORCE=true
   name: music-collector-backend-config
 
@@ -34,4 +34,4 @@ images:
 - name: ghcr.io/janne6565/rekordo-backend
   newTag: main-fa814ed
 - name: ghcr.io/janne6565/rekordo-frontend
-  newTag: main-fdd8208
+  newTag: main-d7f4813
