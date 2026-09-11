@@ -37,4 +37,4 @@ images:
 - name: ghcr.io/janne6565/rekordo-backend
   newTag: 0.28.0
 - name: ghcr.io/janne6565/rekordo-frontend
-  newTag: 0.29.3
+  newTag: 0.29.4
