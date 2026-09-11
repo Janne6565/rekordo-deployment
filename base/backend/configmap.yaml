@@ -37,8 +37,12 @@ data:
   # speaks HTTP at the gRPC port: the collector resets the connection, the agent logs a
   # failed export every few seconds, and no span arrives. It warns about the port once at
   # startup and then carries on, so nothing looks broken from the outside.
+  # Destination is Grafana Alloy, which forwards to Grafana Cloud AND, for the duration
+  # of the parallel run, on to SigNoz -- so the thirteen SigNoz alert rules that read
+  # these series keep firing. An app can only name one OTLP endpoint; the fan-out lives
+  # in cluster-deployment/infrastructure/grafana-alloy.yaml, not here.
   OTEL_EXPORTER_OTLP_PROTOCOL: grpc
-  OTEL_EXPORTER_OTLP_ENDPOINT: http://signoz-otel-collector.observability.svc.cluster.local:4317
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://grafana-k8s-monitoring-alloy-receiver.observability.svc.cluster.local:4317
   MC_OTLP_METRICS_ENABLED: "true"
   # The per-signal override, and it is not redundant with the property below. Micrometer's
   # OtlpConfig resolves its endpoint from the OTEL_* environment first, so the generic
@@ -46,8 +50,8 @@ data:
   # port -- wins over management.otlp.metrics.export.url and sends the metrics to 4317.
   # They are then posted as HTTP at a gRPC port and quietly go nowhere. The registry says
   # which endpoint it chose in one INFO line at startup, which is the only visible sign.
-  OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: http://signoz-otel-collector.observability.svc.cluster.local:4318/v1/metrics
-  MC_OTLP_METRICS_URL: http://signoz-otel-collector.observability.svc.cluster.local:4318/v1/metrics
+  OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: http://grafana-k8s-monitoring-alloy-receiver.observability.svc.cluster.local:4318/v1/metrics
+  MC_OTLP_METRICS_URL: http://grafana-k8s-monitoring-alloy-receiver.observability.svc.cluster.local:4318/v1/metrics
   # A single node with one replica: sampling would only make a quiet service harder to
   # debug, and this app's whole traffic is a rounding error beside the k8s metrics.
   OTEL_TRACES_SAMPLER: always_on
