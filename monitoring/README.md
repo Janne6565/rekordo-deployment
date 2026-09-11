@@ -1,4 +1,34 @@
-# SigNoz dashboards
+# Dashboards
+
+## Grafana Cloud (current)
+
+`grafana-rekordo.json` — the Rekordo dashboard on `janne6565.grafana.net`, uid `rekordo`.
+One dashboard, five rows: Overview, Traffic & latency, Sync & integrity, Runtime,
+Collection & community. Variables: `DS` (datasource) and `env` (`prod` / `staging`,
+from the `deployment_environment` label).
+
+**Rekordo reaches Grafana Cloud over OTLP, so the metric names are NOT the ones the old
+SigNoz dashboards used.** Micrometer's OTLP registry publishes durations in
+**milliseconds** — `http_server_requests_milliseconds`, not
+`http_server_requests_seconds` and not the dotted `http.server.request.duration`.
+Latency is a summary with a `quantile` label (client-side percentiles), so
+`histogram_quantile()` does not apply and the percentiles cannot be re-aggregated
+across replicas; `max by (...)` is the honest reducer at one replica.
+
+Regenerate with the script that built it rather than hand-editing, then apply:
+
+    curl -s -X POST https://janne6565.grafana.net/api/dashboards/db \
+      -H "Authorization: Bearer $GRAFANA_SA_TOKEN" -H 'Content-Type: application/json' \
+      -d "$(python3 -c 'import json;print(json.dumps({"dashboard":json.load(open("monitoring/grafana-rekordo.json")),"overwrite":True}))')"
+
+The token is a **Grafana service account token** (`glsa_…`, Administration → Users and
+access → Service accounts), not the `glc_…` Cloud access-policy token used for
+ingest/queries — that one 401s against the Grafana instance API.
+
+## SigNoz (legacy)
+
+> SigNoz is being decommissioned; these two are kept until the Grafana Cloud dashboard
+> has been checked against them, then they go.
 
 The version-controlled copy of Rekordo's two dashboards. SigNoz keeps dashboards in its
 own database, not in Kubernetes manifests, so **ArgoCD does not apply these** — they are
