@@ -34,4 +34,4 @@ images:
 - name: ghcr.io/janne6565/rekordo-backend
   newTag: main-9317314
 - name: ghcr.io/janne6565/rekordo-frontend
-  newTag: main-0ed0213
+  newTag: main-1472ee0
