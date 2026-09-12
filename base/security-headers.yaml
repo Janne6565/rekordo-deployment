@@ -1,0 +1,66 @@
+# The response headers every route on this Ingress carries.
+#
+# On the Ingress rather than in nginx.conf, because nginx only sees the web app: `/api` goes
+# straight to the backend, and that is where the *user-uploaded* bytes are served from
+# (`/api/v1/photos/{id}/content`). A header set on the frontend alone would miss exactly the
+# responses that most need one.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: security-headers
+spec:
+  headers:
+    # A declared content type is not something nosniff can undo -- PhotoService.servableType
+    # is what keeps a stored `text/html` from being served as one, and that stays the real
+    # defence. This closes the other half: a byte stream the browser would otherwise be free
+    # to guess at.
+    contentTypeNosniff: true
+
+    # The API and the web app are one origin, so an image on this host can be script on this
+    # host if anything ever gets past the upload allowlist. That is the hole this closes, and
+    # `script-src 'self'` is the line that closes it.
+    #
+    #   script-src  Turnstile's api.js, and nothing inline. turnstile.html used to carry its
+    #               widget code in a <script> block; it is /turnstile.js now precisely so
+    #               that 'unsafe-inline' is not needed here. Do not put it back.
+    #   style-src   'unsafe-inline' is unavoidable: React writes style attributes, and every
+    #               one of them is an inline style. Google Fonts serves the stylesheet.
+    #   img-src     https: rather than a host list. Cover art comes from the Cover Art
+    #               Archive and Discogs, both of which redirect to CDN hosts that are theirs
+    #               to change; pinning them would take the sleeves off the shelf on a day
+    #               nobody deployed anything. blob:/data: are the clients' own re-encoding
+    #               step before an upload.
+    #   connect-src 'self' covers the API and the Faro proxy, which is deliberately
+    #               first-party (see nginx.conf). Cloudflare is the widget reporting back.
+    #   frame-src   the widget draws into an iframe of Cloudflare's, plus an about:srcdoc
+    #               one that inherits this policy.
+    #   frame-ancestors  nothing frames this app. Deleting an account, signing every device
+    #               out and the sharing switches are all one click with no re-authentication,
+    #               which is the definition of something worth clickjacking.
+    contentSecurityPolicy: >-
+      default-src 'self';
+      script-src 'self' https://challenges.cloudflare.com;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      font-src 'self' https://fonts.gstatic.com data:;
+      img-src 'self' data: blob: https:;
+      connect-src 'self' https://challenges.cloudflare.com;
+      frame-src https://challenges.cloudflare.com;
+      worker-src 'self' blob:;
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+      frame-ancestors 'none'
+
+    # One year. No includeSubDomains: this host is one of many under jannekeipert.de, and a
+    # header served here has no business speaking for the rest of them.
+    stsSeconds: 31536000
+
+    customResponseHeaders:
+      # Belt and braces with frame-ancestors above, for anything that still reads this one.
+      X-Frame-Options: DENY
+      # A handle is in the path of every public profile, so the URL itself names the person
+      # being looked at. It has no business travelling to Cloudflare or Google Fonts in a
+      # Referer header.
+      Referrer-Policy: no-referrer
+      # None of these are used, and saying so keeps them unavailable to anything injected.
+      Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()

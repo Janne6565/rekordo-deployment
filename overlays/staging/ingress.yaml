@@ -12,6 +12,10 @@ metadata:
   name: music-collector-ingress
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
+    # Applies to every router this Ingress produces -- the web app and /api alike. The
+    # namespace is part of the reference, which is why it is set per overlay rather than in
+    # the base beside the Middleware itself.
+    traefik.ingress.kubernetes.io/router.middlewares: music-collector-staging-security-headers@kubernetescrd
 spec:
   ingressClassName: traefik
   tls:

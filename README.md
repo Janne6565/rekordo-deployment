@@ -63,3 +63,25 @@ breaks ACME HTTP-01 validation for the host.
 kubectl kustomize overlays/staging
 kubectl kustomize overlays/prod
 ```
+
+## Security headers — the prod half is not switched on yet
+
+`base/security-headers.yaml` is a Traefik `Middleware` carrying the CSP, HSTS,
+`frame-ancestors`, `nosniff`, `Referrer-Policy` and `Permissions-Policy`. The object is
+created in **both** namespaces, but only the **staging** Ingress references it. Prod is one
+line, deliberately not yet written:
+
+```yaml
+# overlays/prod/ingress.yaml, under metadata.annotations
+traefik.ingress.kubernetes.io/router.middlewares: music-collector-prod-security-headers@kubernetescrd
+```
+
+**Do not add it until a prod frontend release contains `public/turnstile.js`.** The CSP says
+`script-src 'self' https://challenges.cloudflare.com` with no `'unsafe-inline'`, and until
+that release the phone's bot-check page still carries its widget code in an inline
+`<script>`. Turning the header on first would block it — and a broken Turnstile webview is
+the one failure this project has already paid for four times over.
+
+The order is: frontend release to prod → confirm `/turnstile.js` answers 200 there → add the
+annotation. Both apps auto-sync from `main`, so the annotation lands within a minute or two
+of being pushed.
