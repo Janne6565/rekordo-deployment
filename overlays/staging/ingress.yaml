@@ -25,7 +25,27 @@ spec:
     - hosts:
         - rekordo-staging.jannekeipert.de
       secretName: rekordo-tls
+    - hosts:
+        - staging.rekordo.de
+      secretName: rekordo-de-tls
   rules:
+    - host: staging.rekordo.de
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 8080
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
     - host: music-staging.jannekeipert.de
       http:
         paths:

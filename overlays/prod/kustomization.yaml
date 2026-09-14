@@ -4,6 +4,7 @@ namespace: music-collector-prod
 resources:
 - ../../base
 - ingress.yaml
+- redirects.yaml
 - sealed-secrets
 # CI (music-collector-backend / -frontend) rewrites these tags via
 # `kustomize edit set image` and pushes — ArgoCD then auto-syncs.
@@ -27,6 +28,9 @@ configMapGenerator:
   - MC_PUBLIC_URL=https://rekordo.jannekeipert.de
   - MC_PUSH_ENABLED=true
   - MC_TURNSTILE_ENFORCE=false
+  # Every host the widget can be solved on here: rekordo.de, and the old host that shipped
+  # phone builds still load /turnstile.html from.
+  - MC_TURNSTILE_HOSTNAMES=rekordo.de,rekordo.jannekeipert.de
   name: music-collector-backend-config
 
   # The deployment references the config map by its plain name.

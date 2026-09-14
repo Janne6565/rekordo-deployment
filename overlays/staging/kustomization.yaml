@@ -24,6 +24,7 @@ configMapGenerator:
   - OTEL_RESOURCE_ATTRIBUTES=deployment.environment=staging
   - MC_PUBLIC_URL=https://rekordo-staging.jannekeipert.de
   - MC_TURNSTILE_ENFORCE=true
+  - MC_TURNSTILE_HOSTNAMES=staging.rekordo.de,rekordo-staging.jannekeipert.de
   name: music-collector-backend-config
 
   # The deployment references the config map by its plain name.
