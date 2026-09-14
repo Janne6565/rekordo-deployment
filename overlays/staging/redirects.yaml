@@ -1,0 +1,58 @@
+# The rest of the old staging hosts, sent to https://staging.rekordo.de with the path kept.
+#
+# A separate Ingress because a router.middlewares annotation applies to every router its
+# Ingress produces: on the main Ingress it would redirect /api too. The paths the old hosts
+# still serve are longer rules in ingress.yaml, so Traefik picks them over the `/` here, and
+# so does cert-manager's own /.well-known/acme-challenge route when a certificate renews.
+#
+# No cert-manager annotation here. The certificates for these hosts are requested by the main
+# Ingress; a second annotated Ingress naming the same secrets would make cert-manager fight
+# itself over one Certificate.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-to-rekordo-de
+spec:
+  redirectRegex:
+    regex: ^https?://[^/]+(.*)$
+    replacement: https://staging.rekordo.de${1}
+    permanent: true
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rekordo-redirects
+  annotations:
+    # The namespace is part of the reference, which is why this lives in the overlay.
+    traefik.ingress.kubernetes.io/router.middlewares: music-collector-staging-redirect-to-rekordo-de@kubernetescrd
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - rekordo-staging.jannekeipert.de
+      secretName: rekordo-tls
+    - hosts:
+        - music-staging.jannekeipert.de
+      secretName: music-collector-tls
+  rules:
+    # Never reached: the middleware answers first. An Ingress path needs a backend.
+    - host: rekordo-staging.jannekeipert.de
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
+    - host: music-staging.jannekeipert.de
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
