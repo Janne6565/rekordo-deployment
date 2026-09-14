@@ -17,6 +17,7 @@ resources:
   # Staging refuses outright from the start. No shipped phone build is signed into it, so
   # there is nothing to wait for -- and it is the only place the action and hostname
   # checks can be exercised against real keys before prod comes to rely on them.
+  # Hosts a phone build may still start an external sign-in on; see the prod overlay.
 configMapGenerator:
 - behavior: merge
   literals:
@@ -24,7 +25,6 @@ configMapGenerator:
   - MC_ENVIRONMENT=staging
   - OTEL_RESOURCE_ATTRIBUTES=deployment.environment=staging
   - MC_PUBLIC_URL=https://staging.rekordo.de
-  # Hosts a phone build may still start an external sign-in on; see the prod overlay.
   - MC_OAUTH_CALLBACK_ORIGINS=https://rekordo-staging.jannekeipert.de,https://music-staging.jannekeipert.de
   - MC_TURNSTILE_ENFORCE=true
   - MC_TURNSTILE_HOSTNAMES=staging.rekordo.de,rekordo-staging.jannekeipert.de
@@ -38,4 +38,4 @@ images:
 - name: ghcr.io/janne6565/rekordo-backend
   newTag: main-3a25694
 - name: ghcr.io/janne6565/rekordo-frontend
-  newTag: main-de85f84
+  newTag: main-41eb282
