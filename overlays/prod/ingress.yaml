@@ -19,6 +19,11 @@ metadata:
   name: music-collector-ingress
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
+    # Applies to every router this Ingress produces -- the web app, /api and the old hosts'
+    # Turnstile page alike. The namespace is part of the reference, which is why it is set
+    # per overlay rather than in the base beside the Middleware itself. Prod ran without it
+    # until 2026-09-15; staging had carried it the whole time.
+    traefik.ingress.kubernetes.io/router.middlewares: music-collector-prod-security-headers@kubernetescrd
 spec:
   ingressClassName: traefik
   tls:
