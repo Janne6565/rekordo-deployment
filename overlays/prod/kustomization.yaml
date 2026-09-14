@@ -21,6 +21,9 @@ resources:
   # in the backend log and the new app build has rolled out.
   # Every host the widget can be solved on here: rekordo.de, and the old host that shipped
   # phone builds still load /turnstile.html from.
+  # Hosts a shipped phone build still starts an external sign-in on. The provider has to call
+  # back to the host that set the state cookie, so these get their own registered redirect
+  # URI rather than MC_PUBLIC_URL's. Every entry must be registered with Google and Apple.
 configMapGenerator:
 - behavior: merge
   literals:
@@ -28,9 +31,6 @@ configMapGenerator:
   - MC_ENVIRONMENT=prod
   - OTEL_RESOURCE_ATTRIBUTES=deployment.environment=prod
   - MC_PUBLIC_URL=https://rekordo.de
-  # Hosts a shipped phone build still starts an external sign-in on. The provider has to call
-  # back to the host that set the state cookie, so these get their own registered redirect
-  # URI rather than MC_PUBLIC_URL's. Every entry must be registered with Google and Apple.
   - MC_OAUTH_CALLBACK_ORIGINS=https://rekordo.jannekeipert.de,https://music.jannekeipert.de
   - MC_PUSH_ENABLED=true
   - MC_TURNSTILE_ENFORCE=false
@@ -45,4 +45,4 @@ images:
 - name: ghcr.io/janne6565/rekordo-backend
   newTag: 0.33.0
 - name: ghcr.io/janne6565/rekordo-frontend
-  newTag: 0.33.2
+  newTag: 0.34.0
