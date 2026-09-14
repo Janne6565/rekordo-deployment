@@ -1,11 +1,18 @@
-# Hosts that only ever send people to https://rekordo.de, keeping the path.
+# Hosts, or the rest of a host, that only ever send people to https://rekordo.de, keeping the
+# path.
 #
 # A separate Ingress because a router.middlewares annotation applies to every router its
 # Ingress produces: on the main Ingress it would redirect /api too, and /api on the old hosts
-# has to keep answering the phone builds that have those hosts compiled in.
+# has to keep answering the phone builds that have those hosts compiled in. The paths the old
+# hosts still serve are longer rules in ingress.yaml, so Traefik picks them over the `/` here,
+# and so does cert-manager's own /.well-known/acme-challenge route when a certificate renews.
 #
-# No cert-manager annotation here. The certificate for these hosts is requested by the main
-# Ingress; a second annotated Ingress naming the same secret would make cert-manager fight
+# A signed-out visitor redirected here arrives at an empty shelf: the web app keeps a
+# collection in the browser's IndexedDB, which belongs to the old origin. That was the
+# accepted cost of redirecting at once rather than showing a moved notice first.
+#
+# No cert-manager annotation here. The certificates for these hosts are requested by the main
+# Ingress; a second annotated Ingress naming the same secrets would make cert-manager fight
 # itself over one Certificate.
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
@@ -30,11 +37,37 @@ spec:
     - hosts:
         - www.rekordo.de
       secretName: rekordo-de-tls
+    - hosts:
+        - rekordo.jannekeipert.de
+      secretName: rekordo-tls
+    - hosts:
+        - music.jannekeipert.de
+      secretName: music-collector-tls
   rules:
+    # Never reached: the middleware answers first. An Ingress path needs a backend.
     - host: www.rekordo.de
       http:
         paths:
-          # Never reached: the middleware answers first. An Ingress path needs a backend.
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
+    - host: rekordo.jannekeipert.de
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
+    - host: music.jannekeipert.de
+      http:
+        paths:
           - path: /
             pathType: Prefix
             backend:

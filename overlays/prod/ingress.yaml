@@ -1,12 +1,18 @@
-# Every host the app answers on, one Ingress. Traefik routes by longest prefix: /api hits
-# the backend, everything else the web app (same origin, so the browser never sees CORS).
-# rekordo.de is the app's home; the jannekeipert.de hosts are what shipped phone builds have
-# compiled in, so their /api has to keep answering for as long as those builds are about.
+# Every route the app is actually served on, one Ingress. Traefik routes by longest prefix:
+# /api hits the backend, everything else the web app (same origin, so the browser never sees
+# CORS).
+#
+# rekordo.de is the app's home. The jannekeipert.de hosts are what shipped phone builds have
+# compiled in, so they keep exactly what those builds call: /api, and the Turnstile page the
+# app's webview loads from the host. Everything else on them is redirected to rekordo.de by
+# redirects.yaml -- which never takes these paths, because Traefik prefers the longer rule.
+# Only retire the old hosts once no phone build that names them is still about.
+#
 # TLS is issued per host by cert-manager rather than sharing the multi-domain cert, and each
 # host keeps a *separate* certificate: adding a new name as a SAN on an existing secret would
 # re-issue the cert a live host is already serving, so an ACME failure on the new name could
-# take the old one down. www.rekordo.de rides on rekordo.de's certificate; its Ingress, which
-# only redirects, is in redirects.yaml.
+# take the old one down. The certificates are all requested here, including those for hosts
+# whose only route is in redirects.yaml.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -28,23 +34,6 @@ spec:
       secretName: rekordo-de-tls
   rules:
     - host: rekordo.de
-      http:
-        paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: backend
-                port:
-                  number: 8080
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: frontend
-                port:
-                  number: 80
-    - host: music.jannekeipert.de
       http:
         paths:
           # API first — the backend serves everything under /api/v1/...
@@ -73,10 +62,27 @@ spec:
                 name: backend
                 port:
                   number: 8080
-          - path: /
-            pathType: Prefix
+          - path: /turnstile.html
+            pathType: Exact
             backend:
               service:
                 name: frontend
                 port:
                   number: 80
+          - path: /turnstile.js
+            pathType: Exact
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
+    - host: music.jannekeipert.de
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 8080
