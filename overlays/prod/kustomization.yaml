@@ -43,6 +43,6 @@ generatorOptions:
 
 images:
 - name: ghcr.io/janne6565/rekordo-backend
-  newTag: 0.33.1
+  newTag: 0.33.2
 - name: ghcr.io/janne6565/rekordo-frontend
   newTag: 0.34.1
