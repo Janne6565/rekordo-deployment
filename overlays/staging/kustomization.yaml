@@ -1,3 +1,12 @@
+# Staging for Rekordo.
+#
+# CI (music-collector-backend / -frontend) rewrites the image tags at the bottom via
+# `kustomize edit set image` and pushes -- ArgoCD then auto-syncs. Merging to main in a
+# product repo IS the staging deploy; the tags below are only the bootstrap pins.
+#
+# That same rewrite is why the config values live in backend.env: it hoists comments out
+# of a `literals:` list. Keep explanations there, or at the top of this file where there
+# is no node above them to move to.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: music-collector-staging
@@ -6,31 +15,16 @@ resources:
 - ingress.yaml
 - redirects.yaml
 - sealed-secrets
-# CI (music-collector-backend / -frontend) rewrites these tags via
-# `kustomize edit set image` and pushes — ArgoCD then auto-syncs.
-# Merging to main in a product repo IS the staging deploy.
-# The values below are the bootstrap pins.
-# Per-environment bucket, so staging can never write into the prod one.
-  # The app's own origin. OAuth redirect URIs are built from it and must match what
-  # the provider has registered, and password-reset links point at it — the
-  # application.yml default is localhost, which would silently break both.
-  # Staging refuses outright from the start. No shipped phone build is signed into it, so
-  # there is nothing to wait for -- and it is the only place the action and hostname
-  # checks can be exercised against real keys before prod comes to rely on them.
-  # Hosts a phone build may still start an external sign-in on; see the prod overlay.
+# Values live in backend.env, each beside the comment that explains it. They were
+# `literals:` here until `kustomize edit set image` -- which CI runs on every deploy --
+# hoisted their comments out of the list one by one.
 configMapGenerator:
 - behavior: merge
-  literals:
-  - MC_MINIO_BUCKET=music-collector-photos-staging
-  - MC_ENVIRONMENT=staging
-  - OTEL_RESOURCE_ATTRIBUTES=deployment.environment=staging
-  - MC_PUBLIC_URL=https://staging.rekordo.de
-  - MC_OAUTH_CALLBACK_ORIGINS=https://rekordo-staging.jannekeipert.de,https://music-staging.jannekeipert.de
-  - MC_TURNSTILE_ENFORCE=true
-  - MC_TURNSTILE_HOSTNAMES=staging.rekordo.de,rekordo-staging.jannekeipert.de
+  envs:
+  - backend.env
   name: music-collector-backend-config
 
-  # The deployment references the config map by its plain name.
+# The deployment references the config map by its plain name.
 generatorOptions:
   disableNameSuffixHash: true
 

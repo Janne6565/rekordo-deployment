@@ -1,3 +1,12 @@
+# Production for Rekordo.
+#
+# CI (music-collector-backend / -frontend) rewrites the image tags at the bottom via
+# `kustomize edit set image` and pushes -- ArgoCD then auto-syncs. Cutting a vX.Y.Z tag
+# in a product repo IS the prod deploy; the tags below are only the bootstrap pins.
+#
+# That same rewrite is why the config values live in backend.env: it hoists comments out
+# of a `literals:` list. Keep explanations there, or at the top of this file where there
+# is no node above them to move to.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: music-collector-prod
@@ -6,38 +15,16 @@ resources:
 - ingress.yaml
 - redirects.yaml
 - sealed-secrets
-# CI (music-collector-backend / -frontend) rewrites these tags via
-# `kustomize edit set image` and pushes — ArgoCD then auto-syncs.
-# Cutting a vX.Y.Z tag in a product repo IS the prod deploy.
-# The values below are the bootstrap pins.
-# Per-environment bucket, so staging can never write into the prod one.
-  # The app's own origin. OAuth redirect URIs are built from it and must match what
-  # the provider has registered, and password-reset links point at it — the
-  # application.yml default is localhost, which would silently break both.
-  # Deliberately observing, not refusing. Every phone build at v1.23.0 or earlier predates
-  # the widget and sends no token; enforcing before those are gone would lock their owners
-  # out of their own accounts. The widget is drawn and its tokens are verified and logged
-  # meanwhile. Flip to true once `Turnstile would have refused ...: no token` has died away
-  # in the backend log and the new app build has rolled out.
-  # Every host the widget can be solved on here: rekordo.de, and the old host that shipped
-  # phone builds still load /turnstile.html from.
-  # Hosts a shipped phone build still starts an external sign-in on. The provider has to call
-  # back to the host that set the state cookie, so these get their own registered redirect
-  # URI rather than MC_PUBLIC_URL's. Every entry must be registered with Google and Apple.
+# Values live in backend.env, each beside the comment that explains it. They were
+# `literals:` here until `kustomize edit set image` -- which CI runs on every deploy --
+# hoisted their comments out of the list one by one.
 configMapGenerator:
 - behavior: merge
-  literals:
-  - MC_MINIO_BUCKET=music-collector-photos-prod
-  - MC_ENVIRONMENT=prod
-  - OTEL_RESOURCE_ATTRIBUTES=deployment.environment=prod
-  - MC_PUBLIC_URL=https://rekordo.de
-  - MC_OAUTH_CALLBACK_ORIGINS=https://rekordo.jannekeipert.de,https://music.jannekeipert.de
-  - MC_PUSH_ENABLED=true
-  - MC_TURNSTILE_ENFORCE=false
-  - MC_TURNSTILE_HOSTNAMES=rekordo.de,rekordo.jannekeipert.de
+  envs:
+  - backend.env
   name: music-collector-backend-config
 
-  # The deployment references the config map by its plain name.
+# The deployment references the config map by its plain name.
 generatorOptions:
   disableNameSuffixHash: true
 
