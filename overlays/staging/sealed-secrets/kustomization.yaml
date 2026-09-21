@@ -8,3 +8,4 @@ resources:
   - music-collector-mail-secret.yaml
   - music-collector-discogs-secret.yaml
   - music-collector-turnstile-secret.yaml
+  - music-collector-apple-music-secret.yaml

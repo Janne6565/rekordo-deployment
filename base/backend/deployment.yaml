@@ -88,6 +88,21 @@ spec:
             # queueing, so overstating it turns a slow search into a failed one.
             - name: MC_DISCOGS_REQUESTS_PER_MINUTE
               value: "60"
+            # The ES256 key the backend signs its own Apple Music developer token with --
+            # Apple issues no credential, we mint a JWT and it verifies the signature. The
+            # .p8 from the developer portal, PKCS#8, newlines intact or flattened; the
+            # reader strips both.
+            #
+            # Optional, like the Discogs token and for the same reason: without it album
+            # search falls back to Discogs grouped by master, which is a degraded source
+            # rather than a reason to refuse to start. That is also what every environment
+            # without this secret is running today.
+            - name: MC_APPLE_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: music-collector-apple-music-secret
+                  key: MC_APPLE_PRIVATE_KEY
+                  optional: true
             # A SEND-scoped mail-service key per environment, so revoking staging's cannot
             # stop prod's reset mail. Optional for the same reason as the OAuth keys:
             # without it reset links are logged rather than sent, which is a degraded
